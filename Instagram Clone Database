@@ -78,8 +78,29 @@ INSERT INTO photo_tags(photo_id, tag_id) VALUES (1, 18), (1, 17), (1, 21), (1, 1
 
 /* Now lets extract some data! /*
 
+-- Find the 5 oldest users
 
+SELECT * FROM users
+ORDER BY created_at
+LIMIT 5;
 
+-- What day of the week are the most users on?
+
+SELECT 
+    DAYNAME(created_at) AS day,
+    COUNT(*) AS total
+FROM users
+GROUP BY day
+ORDER BY total DESC
+LIMIT 2;
+
+--Which users have been the most inactive (never posted a photo)?
+
+SELECT username
+FROM users
+LEFT JOIN photos
+    ON users.id = photos.user_id
+WHERE photos.id IS NULL;
 
 -- Lets find the photo with the most likes
 
@@ -96,5 +117,31 @@ GROUP BY photos.id
 ORDER BY total DESC
 LIMIT 1;
 
+-- How often does the average user post?
 
+SELECT (SELECT Count(*) 
+        FROM   photos) / (SELECT Count(*) 
+                          FROM   users) AS avg; 
+
+-- What are the top 5 most common hashtags?
+
+SELECT tags.tag_name, 
+       Count(*) AS total 
+FROM   photo_tags 
+       JOIN tags 
+         ON photo_tags.tag_id = tags.id 
+GROUP  BY tags.id 
+ORDER  BY total DESC 
+LIMIT  5; 
+
+-- Find bot users (fake accounts that have liked every photo in the database)
+
+SELECT username, 
+       Count(*) AS num_likes 
+FROM   users 
+       INNER JOIN likes 
+               ON users.id = likes.user_id 
+GROUP  BY likes.user_id 
+HAVING num_likes = (SELECT Count(*) 
+                    FROM   photos); 
 
